@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Waste Management System</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+        }
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 300px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+        #city-stats {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+        .stat-box {
+            width: 48%;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            font-size: 0.8em;
+            color: #7f8c8d;
+        }
+        #bin-detail {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            display: none;
+            transition: all 0.3s ease;
+        }
+        .bin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .bin-id {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .bin-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .status-ok {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .status-warning {
+            background-color: #f1c40f;
+            color: #34495e;
+        }
+        .status-critical {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0;
+            border-radius: 10px;
+            transition: width 0.5s ease, background-color 0.5s ease;
+        }
+        .bin-details {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .detail-item {
+            width: 48%;
+            margin-bottom: 10px;
+        }
+        .detail-label {
+            font-size: 0.8em;
+            color: #7f8c8d;
+        }
+        .detail-value {
+            font-weight: bold;
+        }
+        #control-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+        .control-btn {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2em;
+            transition: all 0.2s ease;
+        }
+        .control-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        .tooltip {
+            position: absolute;
+            right: 60px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #2c3e50;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            transition: opacity 1s ease;
+        }
+        .loading-title {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        .loading-bar {
+            width: 300px;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        .loading-progress {
+            height: 100%;
+            width: 0;
+            background-color: #3498db;
+            transition: width 0.5s ease;
+        }
+        .loading-text {
+            font-size: 1em;
+            opacity: 0.7;
+        }
+        #notification {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(52, 152, 219, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 200;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        @media (max-width: 768px) {
+            #info-panel, #bin-detail {
+                width: calc(100% - 40px);
+                left: 20px;
+                right: 20px;
+            }
+            #control-panel {
+                bottom: 20px;
+                top: auto;
+                left: 20px;
+                right: auto;
+                flex-direction: row;
+            }
+            .control-btn {
+                margin-right: 10px;
+                margin-bottom: 0;
+            }
+            .tooltip {
+                top: -30px;
+                right: auto;
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <!-- Loading Screen -->
+        <div class="loading-screen" id="loading-screen">
+            <div class="loading-title">Smart Waste Management System</div>
+            <div class="loading-bar">
+                <div class="loading-progress" id="loading-progress"></div>
+            </div>
+            <div class="loading-text" id="loading-text">Initializing city model...</div>
+        </div>
+        
+        <!-- Main Info Panel -->
+        <div id="info-panel">
+            <h2>Smart Waste Dashboard</h2>
+            <div id="city-stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="total-bins">0</div>
+                    <div class="stat-label">Total Bins</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="critical-bins">0</div>
+                    <div class="stat-label">Need Attention</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="avg-fill">0%</div>
+                    <div class="stat-label">Average Fill</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="collections">0</div>
+                    <div class="stat-label">Collections Today</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bin Detail Panel -->
+        <div id="bin-detail">
+            <div class="bin-header">
+                <div class="bin-id" id="detail-bin-id">Bin #123</div>
+                <div class="bin-status status-ok" id="detail-status">OK</div>
+            </div>
+            <div>Fill Level:</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="detail-fill-level"></div>
+            </div>
+            <div class="bin-details">
+                <div class="detail-item">
+                    <div class="detail-label">Location</div>
+                    <div class="detail-value" id="detail-location">Block 3, 5</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Last Collected</div>
+                    <div class="detail-value" id="detail-last-collected">2025-03-07</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Fill Rate</div>
+                    <div class="detail-value" id="detail-fill-rate">3.2% / hour</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">ETA to Full</div>
+                    <div class="detail-value" id="detail-eta">~5 hours</div>
+                </div>
+            </div>
+            <button id="collect-btn" style="width: 100%; background-color: #3498db; color: white; border: none; padding: 8px; border-radius: 5px; margin-top: 10px; cursor: pointer;">Schedule Collection</button>
+        </div>
+        
+        <!-- Control Panel -->
+        <div id="control-panel">
+            <button class="control-btn" id="rotate-btn">
+                <span>🔄</span>
+                <span class="tooltip" id="rotate-tooltip">Pause Rotation</span>
+            </button>
+            <button class="control-btn" id="update-btn">
+                <span>⏱️</span>
+                <span class="tooltip" id="update-tooltip">Pause Updates</span>
+            </button>
+            <button class="control-btn" id="perspective-btn">
+                <span>🔍</span>
+                <span class="tooltip" id="perspective-tooltip">Change View</span>
+            </button>
+            <button class="control-btn" id="add-bin-btn">
+                <span>➕</span>
+                <span class="tooltip" id="add-bin-tooltip">Add New Bin</span>
+            </button>
+        </div>
+        
+        <!-- Notification Banner -->
+        <div id="notification">Bin collection scheduled successfully!</div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    
+    <script>
+        // Main variables
+        let scene, camera, camera2D, currentCamera, renderer, city, bins = [];
+        let rotationActive = true, autoUpdateActive = true;
+        let collectionCount = 0;
+        
+        // City configuration
+        const cityConfig = {
+            size: 20,            // Size in blocks
+            blockSize: 10,       // Size of each block
+            buildings: 40,       // Number of buildings
+            binsCount: 15,       // Number of garbage bins
+            treeCount: 30,       // Number of trees
+            parkCount: 2         // Number of parks
+        };
+        
+        // Colors
+        const colors = {
+            building: [0x8EAEE0, 0x7393B3, 0x5F9EA0, 0x4682B4, 0x6495ED, 0x4169E1],
+            road: 0x444444,
+            sidewalk: 0x999999,
+            grass: 0x65A765,
+            tree: 0x2E8B57,
+            bin: 0x444444,
+            binLid: 0x333333
+        };
+        
+        // Bin data model
+        class BinData {
+            constructor(id, location) {
+                this.id = id;
+                this.location = location;
+                this.fillLevel = Math.random() * 30; // Initial random fill between 0-30%
+                this.lastCollected = new Date(new Date().getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000).toLocaleDateString();
+                this.fillRate = 0.1 + Math.random() * 0.5; // Random fill rate between 0.1-0.6% per update
+                this.needsAttention = false;
+            }
+            
+            update() {
+                if (this.fillLevel < 100) {
+                    this.fillLevel += this.fillRate;
+                    if (this.fillLevel > 100) this.fillLevel = 100;
+                }
+                
+                // Update needs attention flag
+                this.needsAttention = this.fillLevel > 80;
+                
+                return this.fillLevel;
+            }
+            
+            collect() {
+                this.fillLevel = 0;
+                this.lastCollected = new Date().toLocaleDateString();
+                this.needsAttention = false;
+                collectionCount++;
+                updateStatsDisplay();
+            }
+            
+            getStatus() {
+                if (this.fillLevel < 50) return "OK";
+                if (this.fillLevel < 80) return "WARNING";
+                return "CRITICAL";
+            }
+            
+            getETA() {
+                if (this.fillLevel >= 100) return "FULL";
+                const hoursLeft = (100 - this.fillLevel) / this.fillRate;
+                if (hoursLeft < 1) return "< 1 hour";
+                return `~${Math.round(hoursLeft)} hours`;
+            }
+            
+            getFormattedFillRate() {
+                return `${this.fillRate.toFixed(1)}% / hour`;
+            }
+        }
+        
+        // Loading manager to track assets loading
+        function setupLoadingManager() {
+    const loadingManager = new THREE.LoadingManager();
+
+    // Track loading progress
+    loadingManager.onProgress = function (url, itemsLoaded, itemsTotal) {
+        const progress = (itemsLoaded / itemsTotal) * 100;
+        document.getElementById('loading-progress').style.width = `${progress}%`;
+        document.getElementById('loading-text').textContent =
+            `Loading city assets... ${Math.round(progress)}%`;
+
+        // Debugging: Log progress
+        console.log(`Loading: ${url} (${itemsLoaded}/${itemsTotal})`);
+    };
+
+    // When all assets are loaded
+    loadingManager.onLoad = function () {
+        console.log('All assets loaded!');
+        document.getElementById('loading-text').textContent = "Preparing city...";
+
+        // Simulate some additional processing time
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loading-screen');
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 1000);
+
+            // Update stats for the first time
+            updateStatsDisplay();
+        }, 1000);
+    };
+
+    // Handle loading errors
+    loadingManager.onError = function (url) {
+        console.error(`Error loading: ${url}`);
+    };
+
+    // Fallback: Hide loading screen after 10 seconds (in case loading stalls)
+    setTimeout(() => {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen.style.opacity !== '0') {
+            console.warn('Loading took too long. Hiding loading screen.');
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 1000);
+        }
+    }, 10000); // 10 seconds timeout
+
+    return loadingManager;
+}
+        
+        // Initialize the scene
+        function init() {
+            // Setup loading manager
+            const loadingManager = setupLoadingManager();
+            
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB); // Sky blue
+            
+            // Add light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(50, 50, 50);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 500;
+            dirLight.shadow.camera.left = -100;
+            dirLight.shadow.camera.right = 100;
+            dirLight.shadow.camera.top = 100;
+            dirLight.shadow.camera.bottom = -100;
+            scene.add(dirLight);
+            
+            // Setup 3D camera
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(40, 40, 40);
+            camera.lookAt(0, 0, 0);
+            
+            // Setup 2D overhead camera for alternative view
+            const citySize = cityConfig.size * cityConfig.blockSize;
+            camera2D = new THREE.OrthographicCamera(
+                -citySize/1.5, citySize/1.5, 
+                citySize/1.5, -citySize/1.5, 
+                0.1, 1000
+            );
+            camera2D.position.set(0, 80, 0);
+            camera2D.lookAt(0, 0, 0);
+            camera2D.rotation.z = Math.PI / 2; // Adjust to align with north
+            
+            // Set default camera
+            currentCamera = camera;
+            
+            // Setup renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('container').appendChild(renderer.domElement);
+            
+            // Create city group
+            city = new THREE.Group();
+            scene.add(city);
+            
+            // Create the city
+            createGround();
+            createRoads();
+            createBuildings();
+            createParks();
+            createTrees();
+            createBins();
+            
+            // Add event listeners
+            window.addEventListener('resize', onWindowResize);
+            renderer.domElement.addEventListener('click', onDocumentClick);
+            
+            // Add controller button listeners
+            document.getElementById('rotate-btn').addEventListener('click', toggleRotation);
+            document.getElementById('rotate-btn').addEventListener('mouseenter', () => showTooltip('rotate-tooltip'));
+            document.getElementById('rotate-btn').addEventListener('mouseleave', () => hideTooltip('rotate-tooltip'));
+            
+            document.getElementById('update-btn').addEventListener('click', toggleAutoUpdate);
+            document.getElementById('update-btn').addEventListener('mouseenter', () => showTooltip('update-tooltip'));
+            document.getElementById('update-btn').addEventListener('mouseleave', () => hideTooltip('update-tooltip'));
+            
+            document.getElementById('perspective-btn').addEventListener('click', toggleCameraView);
+            document.getElementById('perspective-btn').addEventListener('mouseenter', () => showTooltip('perspective-tooltip'));
+            document.getElementById('perspective-btn').addEventListener('mouseleave', () => hideTooltip('perspective-tooltip'));
+            
+            document.getElementById('add-bin-btn').addEventListener('click', addNewBin);
+            document.getElementById('add-bin-btn').addEventListener('mouseenter', () => showTooltip('add-bin-tooltip'));
+            document.getElementById('add-bin-btn').addEventListener('mouseleave', () => hideTooltip('add-bin-tooltip'));
+            
+            document.getElementById('collect-btn').addEventListener('click', collectSelectedBin);
+            
+            // Start animation loop
+            animate();
+            
+            // Start periodic updates for bin fill levels
+            setInterval(updateBins, 5000); // Update every 5 seconds
+        }
+        
+        // Show tooltip
+        function showTooltip(id) {
+            document.getElementById(id).style.opacity = '1';
+        }
+        
+        // Hide tooltip
+        function hideTooltip(id) {
+            document.getElementById(id).style.opacity = '0';
+        }
+        
+        // Create the ground plane
+        function createGround() {
+            const groundSize = cityConfig.size * cityConfig.blockSize + 20;
+            const groundGeometry = new THREE.PlaneGeometry(groundSize, groundSize);
+            const groundMaterial = new THREE.MeshLambertMaterial({ color: colors.grass });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -0.1;
+            ground.receiveShadow = true;
+            city.add(ground);
+        }
+        
+        // Create the road network
+        function createRoads() {
+            const roadWidth = 3;
+            const citySize = cityConfig.size * cityConfig.blockSize;
+            
+            // Horizontal roads
+            for (let i = 0; i <= cityConfig.size; i++) {
+                const roadGeometry = new THREE.PlaneGeometry(citySize, roadWidth);
+                const roadMaterial = new THREE.MeshLambertMaterial({ color: colors.road });
+                const road = new THREE.Mesh(roadGeometry, roadMaterial);
+                road.rotation.x = -Math.PI / 2;
+                road.position.set(0, 0, i * cityConfig.blockSize - citySize / 2);
+                road.receiveShadow = true;
+                city.add(road);
+                
+                // Sidewalks
+                const sidewalkGeometry = new THREE.PlaneGeometry(citySize, 1);
+                const sidewalkMaterial = new THREE.MeshLambertMaterial({ color: colors.sidewalk });
+                
+                const northSidewalk = new THREE.Mesh(sidewalkGeometry, sidewalkMaterial);
+                northSidewalk.rotation.x = -Math.PI / 2;
+                northSidewalk.position.set(0, 0.01, i * cityConfig.blockSize - citySize / 2 - roadWidth / 2 - 0.5);
+                northSidewalk.receiveShadow = true;
+                city.add(northSidewalk);
+                
+                const southSidewalk = new THREE.Mesh(sidewalkGeometry, sidewalkMaterial);
+                southSidewalk.rotation.x = -Math.PI / 2;
+                southSidewalk.position.set(0, 0.01, i * cityConfig.blockSize - citySize / 2 + roadWidth / 2 + 0.5);
+                southSidewalk.receiveShadow = true;
+                city.add(southSidewalk);
+            }
+            
+            // Vertical roads
+            for (let i = 0; i <= cityConfig.size; i++) {
+                const roadGeometry = new THREE.PlaneGeometry(roadWidth, citySize);
+                const roadMaterial = new THREE.MeshLambertMaterial({ color: colors.road });
+                const road = new THREE.Mesh(roadGeometry, roadMaterial);
+                road.rotation.x = -Math.PI / 2;
+                road.position.set(i * cityConfig.blockSize - citySize / 2, 0, 0);
+                road.receiveShadow = true;
+                city.add(road);
+                
+                // Sidewalks
+                const sidewalkGeometry = new THREE.PlaneGeometry(1, citySize);
+                const sidewalkMaterial = new THREE.MeshLambertMaterial({ color: colors.sidewalk });
+                
+                const westSidewalk = new THREE.Mesh(sidewalkGeometry, sidewalkMaterial);
+                westSidewalk.rotation.x = -Math.PI / 2;
+                westSidewalk.position.set(i * cityConfig.blockSize - citySize / 2 - roadWidth / 2 - 0.5, 0.01, 0);
+                westSidewalk.receiveShadow = true;
+                city.add(westSidewalk);
+                
+                const eastSidewalk = new THREE.Mesh(sidewalkGeometry, sidewalkMaterial);
+                eastSidewalk.rotation.x = -Math.PI / 2;
+                eastSidewalk.position.set(i * cityConfig.blockSize - citySize / 2 + roadWidth / 2 + 0.5, 0.01, 0);
+                eastSidewalk.receiveShadow = true;
+                city.add(eastSidewalk);
+            }
+        }
+        
+        // Create buildings
+        function createBuildings() {
+            const citySize = cityConfig.size * cityConfig.blockSize;
+            const halfCity = citySize / 2;
+            
+            // Track occupied positions to avoid overlaps
+            const occupiedPositions = new Set();
+            
+            for (let i = 0; i < cityConfig.buildings; i++) {
+                // Randomize building dimensions and position
+                const width = 2 + Math.random() * 6;
+                const depth = 2 + Math.random() * 6;
+                const height = 5 + Math.random() * 25;
+                
+                // Find unoccupied position at block grid
+                let x, z;
+                let attempt = 0;
+                let positionKey;
+                
+                do {
+                    // Get position aligned to grid
+                    const blockX = Math.floor(Math.random() * cityConfig.size);
+                    const blockZ = Math.floor(Math.random() * cityConfig.size);
+                    
+                    // Center of the block
+                    x = blockX * cityConfig.blockSize - halfCity + cityConfig.blockSize / 2;
+                    z = blockZ * cityConfig.blockSize - halfCity + cityConfig.blockSize / 2;
+                    
+                    // Generate a unique key for the position
+                    positionKey = `${blockX},${blockZ}`;
+                    attempt++;
+                } while (occupiedPositions.has(positionKey) && attempt < 100);
+                
+                // If we couldn't find a position after 100 attempts, skip this building
+                if (attempt >= 100) continue;
+                
+                // Mark the position as occupied
+                occupiedPositions.add(positionKey);
+                
+                // Create building geometry
+                const buildingGeometry = new THREE.BoxGeometry(width, height, depth);
+                const buildingMaterial = new THREE.MeshLambertMaterial({
+                    color: colors.building[Math.floor(Math.random() * colors.building.length)]
+                });
+                const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+                building.position.set(x, height / 2, z);
+                building.castShadow = true;
+                building.receiveShadow = true;
+                city.add(building);
+            }
+        }
+        
+        // Create parks
+        function createParks() {
+            const citySize = cityConfig.size * cityConfig.blockSize;
+            const halfCity = citySize / 2;
+            
+            for (let i = 0; i < cityConfig.parkCount; i++) {
+                // Randomize park size and position
+                const width = 10 + Math.random() * 20;
+                const depth = 10 + Math.random() * 20;
+                
+                // Align to grid
+                const blockX = Math.floor(Math.random() * cityConfig.size);
+                const blockZ = Math.floor(Math.random() * cityConfig.size);
+                const x = blockX * cityConfig.blockSize - halfCity + cityConfig.blockSize / 2;
+                const z = blockZ * cityConfig.blockSize - halfCity + cityConfig.blockSize / 2;
+                
+                // Create park geometry
+                const parkGeometry = new THREE.PlaneGeometry(width, depth);
+                const parkMaterial = new THREE.MeshLambertMaterial({ color: colors.grass });
+                const park = new THREE.Mesh(parkGeometry, parkMaterial);
+                park.rotation.x = -Math.PI / 2;
+                park.position.set(x, 0.01, z);
+                park.receiveShadow = true;
+                city.add(park);
+            }
+        }
+        
+        // Create trees
+        function createTrees() {
+            const citySize = cityConfig.size * cityConfig.blockSize;
+            const halfCity = citySize / 2;
+            
+            for (let i = 0; i < cityConfig.treeCount; i++) {
+                // Randomize tree position
+                const x = Math.random() * citySize - halfCity;
+                const z = Math.random() * citySize - halfCity;
+                
+                // Create tree trunk
+                const trunkGeometry = new THREE.CylinderGeometry(0.2, 0.2, 3);
+                const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                trunk.position.set(x, 1.5, z);
+                trunk.castShadow = true;
+                trunk.receiveShadow = true;
+                city.add(trunk);
+                
+                // Create tree leaves
+                const leavesGeometry = new THREE.SphereGeometry(2);
+                const leavesMaterial = new THREE.MeshLambertMaterial({ color: colors.tree });
+                const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+                leaves.position.set(x, 4, z);
+                leaves.castShadow = true;
+                leaves.receiveShadow = true;
+                city.add(leaves);
+            }
+        }
+        
+        // Create garbage bins
+        function createBins() {
+            const citySize = cityConfig.size * cityConfig.blockSize;
+            const halfCity = citySize / 2;
+            
+            for (let i = 0; i < cityConfig.binsCount; i++) {
+                // Randomize bin position
+                const x = Math.random() * citySize - halfCity;
+                const z = Math.random() * citySize - halfCity;
+                
+                // Create bin base
+                const binGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1);
+                const binMaterial = new THREE.MeshLambertMaterial({ color: colors.bin });
+                const bin = new THREE.Mesh(binGeometry, binMaterial);
+                bin.position.set(x, 0.5, z);
+                bin.castShadow = true;
+                bin.receiveShadow = true;
+                city.add(bin);
+                
+                // Create bin lid
+                const lidGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.1);
+                const lidMaterial = new THREE.MeshLambertMaterial({ color: colors.binLid });
+                const lid = new THREE.Mesh(lidGeometry, lidMaterial);
+                lid.position.set(x, 1.05, z);
+                lid.castShadow = true;
+                lid.receiveShadow = true;
+                city.add(lid);
+                
+                // Create bin data
+                const binData = new BinData(i + 1, `Block ${Math.floor((x + halfCity) / cityConfig.blockSize)}, ${Math.floor((z + halfCity) / cityConfig.blockSize)}`);
+                bins.push(binData);
+                
+                // Add click event to bin
+                bin.userData = { id: binData.id };
+            }
+        }
+        
+        // Update bin fill levels
+        function updateBins() {
+            if (!autoUpdateActive) return;
+            
+            bins.forEach(bin => bin.update());
+            updateStatsDisplay();
+        }
+        
+        // Update the stats display
+        function updateStatsDisplay() {
+            // Total bins
+            document.getElementById('total-bins').textContent = bins.length;
+            
+            // Critical bins
+            const criticalBins = bins.filter(bin => bin.needsAttention).length;
+            document.getElementById('critical-bins').textContent = criticalBins;
+            
+            // Average fill level
+            const totalFill = bins.reduce((sum, bin) => sum + bin.fillLevel, 0);
+            const avgFill = totalFill / bins.length;
+            document.getElementById('avg-fill').textContent = `${avgFill.toFixed(1)}%`;
+            
+            // Collections today
+            document.getElementById('collections').textContent = collectionCount;
+        }
+        
+        // Handle window resize
+        function onWindowResize() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            
+            camera2D.left = -width / 2;
+            camera2D.right = width / 2;
+            camera2D.top = height / 2;
+            camera2D.bottom = -height / 2;
+            camera2D.updateProjectionMatrix();
+            
+            renderer.setSize(width, height);
+        }
+        
+        // Handle click events
+        function onDocumentClick(event) {
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, currentCamera);
+            
+            const intersects = raycaster.intersectObjects(city.children);
+            if (intersects.length > 0) {
+                const clickedObject = intersects[0].object;
+                if (clickedObject.userData && clickedObject.userData.id) {
+                    const binId = clickedObject.userData.id;
+                    showBinDetails(binId);
+                }
+            }
+        }
+
+        function simulateLoadingProgress() {
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += 10;
+        document.getElementById('loading-progress').style.width = `${progress}%`;
+        document.getElementById('loading-text').textContent =
+            `Loading city assets... ${progress}%`;
+
+        if (progress >= 100) {
+            clearInterval(interval);
+            loadingManager.onLoad(); // Manually trigger onLoad
+        }
+    }, 500); // Update every 500ms
+}
+
+// Call this function if no assets are being loaded
+simulateLoadingProgress();
+        
+        // Show bin details
+        function showBinDetails(binId) {
+            const bin = bins.find(b => b.id === binId);
+            if (!bin) return;
+            
+            // Update bin details panel
+            document.getElementById('detail-bin-id').textContent = `Bin #${bin.id}`;
+            document.getElementById('detail-status').textContent = bin.getStatus();
+            document.getElementById('detail-status').className = `bin-status status-${bin.getStatus().toLowerCase()}`;
+            document.getElementById('detail-location').textContent = bin.location;
+            document.getElementById('detail-last-collected').textContent = bin.lastCollected;
+            document.getElementById('detail-fill-rate').textContent = bin.getFormattedFillRate();
+            document.getElementById('detail-eta').textContent = bin.getETA();
+            
+            // Update fill level progress bar
+            const fillLevelElement = document.getElementById('detail-fill-level');
+            fillLevelElement.style.width = `${bin.fillLevel}%`;
+            fillLevelElement.style.backgroundColor = bin.fillLevel < 50 ? '#2ecc71' : bin.fillLevel < 80 ? '#f1c40f' : '#e74c3c';
+            
+            // Show the bin detail panel
+            document.getElementById('bin-detail').style.display = 'block';
+        }
+        
+        // Toggle camera rotation
+        function toggleRotation() {
+            rotationActive = !rotationActive;
+            document.getElementById('rotate-tooltip').textContent = rotationActive ? 'Pause Rotation' : 'Resume Rotation';
+        }
+        
+        // Toggle auto updates
+        function toggleAutoUpdate() {
+            autoUpdateActive = !autoUpdateActive;
+            document.getElementById('update-tooltip').textContent = autoUpdateActive ? 'Pause Updates' : 'Resume Updates';
+        }
+        
+        // Toggle camera view
+        function toggleCameraView() {
+            currentCamera = currentCamera === camera ? camera2D : camera;
+            document.getElementById('perspective-tooltip').textContent = currentCamera === camera ? '2D View' : '3D View';
+        }
+        
+        // Add a new bin
+        function addNewBin() {
+            const citySize = cityConfig.size * cityConfig.blockSize;
+            const halfCity = citySize / 2;
+            
+            // Randomize bin position
+            const x = Math.random() * citySize - halfCity;
+            const z = Math.random() * citySize - halfCity;
+            
+            // Create bin base
+            const binGeometry = new THREE.CylinderGeometry(0.5, 0.5, 1);
+            const binMaterial = new THREE.MeshLambertMaterial({ color: colors.bin });
+            const bin = new THREE.Mesh(binGeometry, binMaterial);
+            bin.position.set(x, 0.5, z);
+            bin.castShadow = true;
+            bin.receiveShadow = true;
+            city.add(bin);
+            
+            // Create bin lid
+            const lidGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.1);
+            const lidMaterial = new THREE.MeshLambertMaterial({ color: colors.binLid });
+            const lid = new THREE.Mesh(lidGeometry, lidMaterial);
+            lid.position.set(x, 1.05, z);
+            lid.castShadow = true;
+            lid.receiveShadow = true;
+            city.add(lid);
+            
+            // Create bin data
+            const binData = new BinData(bins.length + 1, `Block ${Math.floor((x + halfCity) / cityConfig.blockSize)}, ${Math.floor((z + halfCity) / cityConfig.blockSize)}`);
+            bins.push(binData);
+            
+            // Add click event to bin
+            bin.userData = { id: binData.id };
+            
+            // Update stats
+            updateStatsDisplay();
+        }
+        
+        // Collect the selected bin
+        function collectSelectedBin() {
+            const binId = parseInt(document.getElementById('detail-bin-id').textContent.replace('Bin #', ''));
+            const bin = bins.find(b => b.id === binId);
+            if (bin) {
+                bin.collect();
+                showNotification('Bin collection scheduled successfully!');
+            }
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.opacity = '1';
+            setTimeout(() => {
+                notification.style.opacity = '0';
+            }, 3000);
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate the city if rotation is active
+            if (rotationActive) {
+                city.rotation.y += 0.002;
+            }
+            
+            // Render the scene
+            renderer.render(scene, currentCamera);
+        }
+        
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
